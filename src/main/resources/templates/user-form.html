@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${user.id != null} ? 'Edit User' : 'New User'">User Form</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 300px; padding: 8px; }
+        .alert { padding: 10px; margin-bottom: 20px; border-radius: 4px; }
+        .alert-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        button { padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        a { color: #007bff; text-decoration: none; }
+    </style>
+</head>
+<body>
+<h1 th:text="${user.id != null} ? 'Edit User' : 'Create New User'">User Form</h1>
+
+<!-- Отображение ошибки -->
+<div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+<!-- Форма для РЕДАКТИРОВАНИЯ (если id != null) -->
+<form th:action="@{/admin/update}"
+      th:object="${user}"
+      method="post"
+      th:if="${user.id != null}">
+
+    <input type="hidden" th:field="*{id}"/>
+
+    <div class="form-group">
+        <label>Username:</label>
+        <input type="text" th:field="*{username}" required/>
+    </div>
+
+    <div class="form-group">
+        <label>Password:</label>
+        <input type="password" th:field="*{password}" placeholder="Leave empty to keep current"/>
+    </div>
+
+    <div class="form-group">
+        <label>Name:</label>
+        <input type="text" th:field="*{name}" required/>
+    </div>
+
+    <div class="form-group">
+        <label>Email:</label>
+        <input type="email" th:field="*{email}" required/>
+    </div>
+
+    <div class="form-group">
+        <label>Age:</label>
+        <input type="number" th:field="*{age}" required/>
+    </div>
+
+    <!-- ✅ ПОЛЕ ДЛЯ ВЫБОРА РОЛЕЙ -->
+    <div class="form-group">
+        <label>Roles:</label>
+        <select name="roles" multiple="multiple" size="2">
+            <option th:each="role : ${allRoles}"
+                    th:value="${role.id}"
+                    th:text="${role.name}"
+                    th:selected="${user.roles != null and user.roles.contains(role)}">
+            </option>
+        </select>
+        <small>Hold Ctrl/Cmd to select multiple roles</small>
+    </div>
+
+    <button type="submit">Save</button>
+    <a th:href="@{/admin}" style="margin-left: 10px;">Cancel</a>
+</form>
+
+<!-- Форма для СОЗДАНИЯ (если id == null) -->
+<form th:action="@{/admin}"
+      th:object="${user}"
+      method="post"
+      th:unless="${user.id != null}">
+
+    <div class="form-group">
+        <label>Username:</label>
+        <input type="text" th:field="*{username}" required/>
+    </div>
+
+    <div class="form-group">
+        <label>Password:</label>
+        <input type="password" th:field="*{password}" required/>
+    </div>
+
+    <div class="form-group">
+        <label>Name:</label>
+        <input type="text" th:field="*{name}" required/>
+    </div>
+
+    <div class="form-group">
+        <label>Email:</label>
+        <input type="email" th:field="*{email}" required/>
+    </div>
+
+    <div class="form-group">
+        <label>Age:</label>
+        <input type="number" th:field="*{age}" required/>
+    </div>
+
+    <!-- ✅ ПОЛЕ ДЛЯ ВЫБОРА РОЛЕЙ -->
+    <div class="form-group">
+        <label>Roles:</label>
+        <select name="roles" multiple="multiple" size="2">
+            <option th:each="role : ${allRoles}"
+                    th:value="${role.id}"
+                    th:text="${role.name}">
+            </option>
+        </select>
+        <small>Hold Ctrl/Cmd to select multiple roles</small>
+    </div>
+
+    <button type="submit">Save</button>
+    <a th:href="@{/admin}" style="margin-left: 10px;">Cancel</a>
+</form>
+</body>
+</html>
