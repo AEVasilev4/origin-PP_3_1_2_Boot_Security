@@ -1,14 +1,14 @@
 package ru.kata.spring.boot_security.demo.configs;
 
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 public class SuccessUserHandler implements AuthenticationSuccessHandler {
@@ -17,27 +17,13 @@ public class SuccessUserHandler implements AuthenticationSuccessHandler {
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication) throws IOException {
+        Set<String> roles = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toSet());
 
-        // Получаем роли авторизованного пользователя
-        Set<String> roles = AuthorityUtils.authorityListToSet(authentication.getAuthorities());
-
-        //   сначала проверяем ADMIN
-        if (roles.contains("ROLE_ADMIN")) {
-            response.sendRedirect("/admin");
-        }
-        // проверяем USER
-        else if (roles.contains("ROLE_USER")) {
-            response.sendRedirect("/user");
-        }
-        // дефолтный редирект
-        else {
-            response.sendRedirect("/login");
-        }
+        String redirectUrl = roles.contains("ROLE_ADMIN") ? "/admin" : "/user";
+        response.sendRedirect(redirectUrl);
     }
 }
-
-
-
-
 
 

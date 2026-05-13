@@ -11,6 +11,7 @@ public class Role implements GrantedAuthority {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, unique = true)
     private String name;
 
     public Role() {}
@@ -27,7 +28,26 @@ public class Role implements GrantedAuthority {
 
     @Override
     public String getAuthority() {
-        return getName();
+        if (name == null) return "";
+
+        return name.startsWith("ROLE_") ? name.toUpperCase() : "ROLE_" + name.toUpperCase();
+
+    }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Role)) return false;
+        Role role = (Role) o;
+        return id != null && id.equals(role.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
+    @Override
+    public String toString() {
+        return "Role{id=" + id + ", name='" + name + "'}";
     }
 }
 

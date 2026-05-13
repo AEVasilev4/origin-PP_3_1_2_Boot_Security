@@ -11,9 +11,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 @Service
+@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
 
     private final UserDao userDao;
@@ -26,78 +28,39 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional
     public List<User> getAllUsers() {
         return userDao.getAllUsers();
     }
-
     @Override
-    @Transactional
-    public void saveUser(User user, Long[] roleIds) {
-        // 1. Проверка на дубликат логина
-        if (userDao.getUserByUsername(user.getUsername()) != null) {
-            throw new IllegalArgumentException("Пользователь с таким логином уже существует");
-        }
-
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-
-
-        assignRoles(user, roleIds);
-
-        userDao.saveUser(user);
-    }
-
-
-    @Override
-    @Transactional
-    public void saveUser(User user) {
-        saveUser(user, null);
-    }
-
-    @Override
-    @Transactional
     public User getUserById(Long id) {
         return userDao.getUserById(id);
     }
 
     @Override
     @Transactional
-    public User getUserByUsername(String username) {
-        return userDao.getUserByUsername(username);
+    public void saveUser(User user, Set<Role> roles) {
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setRoles(roles != null ? roles : new HashSet<>());
+        userDao.saveUser(user);
     }
-
     @Override
     @Transactional
-    public void updateUser(Long id, User updatedUser, Long[] roleIds) {
-        User userToUpdate = getUserById(id);
-        if (userToUpdate == null) {
-            throw new RuntimeException("User not found with id: " + id);
+    public void updateUser(User user, Set<Role> roles) {
+        User existingUser = userDao.getUserById(user.getId());
+        if (existingUser != null) {
+            existingUser.setUsername(user.getUsername());
+            existingUser.setName(user.getName());
+            existingUser.setEmail(user.getEmail());
+            existingUser.setAge(user.getAge());
+
+            if (user.getPassword() != null && !user.getPassword().isEmpty()) {
+                existingUser.setPassword(passwordEncoder.encode(user.getPassword()));
+            }
+
+            existingUser.setRoles(roles != null ? roles : new HashSet<>());
+            userDao.updateUser(existingUser);
         }
-
-
-        userToUpdate.setUsername(updatedUser.getUsername());
-        userToUpdate.setName(updatedUser.getName());
-        userToUpdate.setEmail(updatedUser.getEmail());
-        userToUpdate.setAge(updatedUser.getAge());
-
-
-        if (updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty()) {
-            userToUpdate.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
-        }
-
-
-        assignRoles(userToUpdate, roleIds);
-
-        userDao.updateUser(id, userToUpdate);
     }
-
-
-    @Override
-    @Transactional
-    public void updateUser(Long id, User updatedUser) {
-        updateUser(id, updatedUser, null);
-    }
-
     @Override
     @Transactional
     public void deleteUser(Long id) {
@@ -108,31 +71,29 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userDao.getUserByUsername(username);
         if (user == null) {
-            throw new UsernameNotFoundException("User not found with username: " + username);
+            throw new UsernameNotFoundException("User not found: " + username);
         }
         return user;
     }
 
     @Override
-    @Transactional
     public List<Role> getAllRoles() {
         return userDao.getAllRoles();
     }
-
-
-    private void assignRoles(User user, Long[] roleIds) {
-        user.setRoles(new HashSet<>());
-        if (roleIds != null && roleIds.length > 0) {
-            for (Long roleId : roleIds) {
-                Role role = userDao.getRoleById(roleId);
-                if (role != null) {
-                    user.getRoles().add(role);
-                }
-            }
-        }
+    @Override
+    @Transactional(readOnly = true)
+    public User findByUsername(String username) {
+        return userDao.getUserByUsername(username);
     }
+
+    @Override
+    public Set<Role> getRolesByIds(List<Long> ids) {
+        return userDao.getRolesByIds(ids);
+    }
+
+
+
 }
